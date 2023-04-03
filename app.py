@@ -1,57 +1,26 @@
-# Spam Message is like: You 🎁 gift a discount of INR 7000/- 
-# on LetsUpgrade Fullstack programs by sharing coupon code REFER20 
-# along with your unique referral code 
-import streamlit as st
+import streamlit as st 
 import pickle
-import string
-from nltk.corpus import stopwords
-import nltk
-from nltk.stem.porter import PorterStemmer
+from sklearn.feature_extraction.text import CountVectorizer
+import sklearn
 
-ps = PorterStemmer()
+with open('spam-ham.pkl', 'rb') as f:
+    model = pickle.load(f)
 
+with open('cv.pkl', 'rb') as f:
+    cv = pickle.load(f)
 
-def transform_text(text):
-    text = text.lower()
-    text = nltk.word_tokenize(text)
+"""
+Created on sat Aug 15    12:53:04 2022
+@author: Sunil.Giri
+"""
+st.title(':red[Spam] or :blue[ham] mail :green[prediction] :sunglasses:')
+qsn = st.text_input('Enter any text')
 
-    y = []
-    for i in text:
-        if i.isalnum():
-            y.append(i)
+if st.button('PREDICT'):
+    vectorized = cv.transform([qsn])
+    result = model.predict(vectorized)
 
-    text = y[:]
-    y.clear()
-
-    for i in text:
-        if i not in stopwords.words('english') and i not in string.punctuation:
-            y.append(i)
-
-    text = y[:]
-    y.clear()
-
-    for i in text:
-        y.append(ps.stem(i))
-
-    return " ".join(y)
-
-tfidf = pickle.load(open('vectorizer.pkl','rb'))
-model = pickle.load(open('model.pkl','rb'))
-
-st.title("Email/SMS Spam Classifier")
-
-input_sms = st.text_area("Enter the message")
-
-if st.button('Predict'):
-
-    # 1. preprocess
-    transformed_sms = transform_text(input_sms)
-    # 2. vectorize
-    vector_input = tfidf.transform([transformed_sms])
-    # 3. predict
-    result = model.predict(vector_input)[0]
-    # 4. Display
-    if result == 1:
-        st.header("Spam")
+    if result:
+        st.header('SPAM')
     else:
-        st.header("Not Spam")
+        st.header('HAM')
